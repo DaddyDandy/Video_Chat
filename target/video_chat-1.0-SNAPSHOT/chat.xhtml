@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+
+<h:head>
+    <title>Chat</title>
+</h:head>
+
+<h:body>
+
+    <p:layout fullPage="true">
+
+        <!--online users side-->
+        <p:layoutUnit position="west" size="30%" resizable="false" collapsible="true" effect="fold">
+            <h:form id="online_users_form">
+
+                <p:remoteCommand name="connectSocketForChat" autoRun="true" action="#{chatBean.connectSocket}"/>
+                <p:remoteCommand name="updatingUsersOnline" update="users"/>
+                <p:remoteCommand name="openDialog" action="#{chatBean.invitePrivate}"/>
+
+                <p:dataGrid columns="1" style="border: hidden; width: 100%"
+                            id="users"
+                            autoUpdate="true"
+                            value="#{userBean.usersOnline.usersOnline}"
+                            var="userOnline">
+
+                    <f:facet name="header">
+                        Users online
+                    </f:facet>
+
+                    <p:commandButton value="#{userOnline} (p.m.)"
+                                     ajax="true"
+                                     icon="ui-icon-play"
+                                     style="width: 100%;"
+                                     action="#{chatBean.invitePrivate}">
+
+                        <f:setPropertyActionListener value="#{userOnline}" target="#{videoBean.privateUser}"/>
+                        <f:setPropertyActionListener value="#{userOnline}" target="#{chatBean.privateUser}"/>
+
+                    </p:commandButton>
+
+                </p:dataGrid>
+            </h:form>
+        </p:layoutUnit>
+
+        <!--chat side-->
+        <p:layoutUnit position="center" resizable="false" style="border: hidden">
+            <p:layout style="overflow: hidden">
+
+                <!--messages-->
+                <p:layoutUnit id="top"
+                              position="center"
+                              resizable="false"
+                              header="Chat +"
+                              style="border: none">
+
+                    <div id="messageList">
+                    <h:form id="messageListContent"></h:form>
+                    </div>
+
+                </p:layoutUnit>
+
+                <!--text input-->
+                <p:layoutUnit id="bottom" position="south" size="10%" resizable="false" style="border: hidden">
+
+                    <h:form>
+                        <p:focus for="inputText"/>
+                        <p:growl id="writeMsg"/>
+
+                        <h:panelGrid columns="3" id="grid" style="width: 100%">
+                            <h:outputLabel value="Message : " for="inputText">
+                                <p:inputText id="inputText"
+                                             value="#{chatBean.globalMsg}"
+                                             required="true"
+                                             style="width: 70%; height: 90%"
+                                             autoResize="false">
+                                    <p:focus for="inputText"/>
+                                </p:inputText>
+                            </h:outputLabel>
+
+                            <!--Button to submit written text-->
+                            <p:commandButton id="btn_add"
+                                             value="Add"
+                                             style="width: 95%; height: 100%"
+                                             ajax="true"
+                                             update="writeMsg @parent"
+                                             actionListener="#{chatBean.sendMsg}"/>
+                        </h:panelGrid>
+                    </h:form>
+
+                </p:layoutUnit>
+            </p:layout>
+
+        </p:layoutUnit>
+    </p:layout>
+
+    <!--message socket-->
+    <p:socket onMessage="handleMessage" channel="/room" widgetVar="public_socket" autoConnect="false"/>
+
+    <!--notification socket-->
+    <p:socket onMessage="handleNotification" channel="/notifications" widgetVar="notfocation_socket"/>
+
+    <!--video invite dialog-->
+    <h:form>
+        <p:dialog header="Enjoy video chat"
+                  id="notification"
+                  widgetVar="videoDialog"
+                  modal="true"
+                  height="100"
+                  width="400"
+                  showEffect="bounce"
+                  hideEffect="bounce">
+
+            <h:outputText value="Do you want to enter private chat?"/>
+            <br/>
+
+            <div style="margin-top: 20px;">
+                <h:commandButton value="Ok"
+                                 ajax="false"
+                                 action="#{videoBean.openVideo}"
+                                 style="width: 50%">
+
+                </h:commandButton>
+                <h:commandButton value="Cancel"
+                                 onclick="inviteVideoDlg.hide()"
+                                 style="width: 50%"/>
+            </div>
+        </p:dialog>
+    </h:form>
+
+    <script type="text/javascript">
+        //messages
+        function handleMessage(message) {
+            var chatContent = $(PrimeFaces.escapeClientId('messageListContent')),
+                    text = message.toString();
+
+            chatContent.append(text + '<br/>');
+            //keep scroll
+            $('#messageList').animate(
+                    {
+                        scrollTop: $('#messageList').find('.messageListContent')
+                                .height()
+                    }, 0);
+        }
+
+        //notifications
+        function handleNotification(data) {
+            switch (data.toString()) {
+                case "update_ui":
+                    updatingUsersOnline();
+                    break;
+                case "open_dialog":
+                    openDialog();
+                    break;
+            }
+        }
+    </script>
+
+</h:body>
+
+</html>

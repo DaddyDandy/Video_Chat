@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component inheritJdk="true">
+	<output-test url="file://$MODULE_DIR$/target/test-classes"/>
+	<contentEntry url="file://$MODULE_DIR$">
+		<testFolder url="file://$MODULE_DIR$/src/test/java"/>
+		<excludeFolder url="file://$MODULE_DIR$/target"/>
+	</contentEntry>
+	<lib name="Maven: javax:javaee-api:7.0" scope="PROVIDED"/>
+	<lib name="Maven: com.sun.mail:javax.mail:1.5.0" scope="PROVIDED"/>
+	<lib name="Maven: javax.activation:activation:1.1" scope="RUNTIME"/>
+	<lib name="Maven: org.hibernate:hibernate-validator:4.0.2.GA" scope="RUNTIME"/>
+	<lib name="Maven: javax.xml.bind:jaxb-api:2.1" scope="RUNTIME"/>
+	<lib name="Maven: javax.xml.stream:stax-api:1.0-2" scope="RUNTIME"/>
+	<lib name="Maven: com.sun.xml.bind:jaxb-impl:2.1.3" scope="RUNTIME"/>
+	<levels>
+		<level name="JPA 1.0-JPA 1.0" value="project"/>
+		<level name="JPA 2.0-JPA 2.0" value="project"/>
+		<level name="Maven: org.primefaces:primefaces:4.0" value="project"/>
+		<level name="Maven: org.atmosphere:atmosphere-runtime:2.1.3" value="project"/>
+		<level name="Maven: org.slf4j:slf4j-api:1.6.1" value="project"/>
+		<level name="Maven: com.sun.faces:jsf-api:2.2.2" value="project"/>
+		<level name="Maven: com.sun.faces:jsf-impl:2.2.2" value="project"/>
+		<level name="Maven: javax.servlet:servlet-api:2.5" value="project"/>
+		<level name="Maven: javax:javaee-api:7.0" value="project"/>
+		<level name="Maven: com.sun.mail:javax.mail:1.5.0" value="project"/>
+		<level name="Maven: javax.activation:activation:1.1" value="project"/>
+		<level name="Maven: commons-fileupload:commons-fileupload:1.2.1" value="project"/>
+		<level name="Maven: javax.servlet:jstl:1.2" value="project"/>
+		<level name="Maven: org.hibernate:hibernate-core:4.2.7.SP1" value="project"/>
+		<level name="Maven: antlr:antlr:2.7.7" value="project"/>
+		<level name="Maven: org.jboss.logging:jboss-logging:3.1.0.GA" value="project"/>
+		<level name="Maven: dom4j:dom4j:1.6.1" value="project"/>
+		<level name="Maven: org.javassist:javassist:3.18.1-GA" value="project"/>
+		<level name="Maven: org.jboss.spec.javax.transaction:jboss-transaction-api_1.1_spec:1.0.1.Final" value="project"/>
+		<level name="Maven: org.hibernate.javax.persistence:hibernate-jpa-2.0-api:1.0.1.Final" value="project"/>
+		<level name="Maven: org.hibernate.common:hibernate-commons-annotations:4.0.2.Final" value="project"/>
+		<level name="Maven: mysql:mysql-connector-java:5.1.27" value="project"/>
+		<level name="Maven: org.primefaces.themes:all-themes:1.0.10" value="project"/>
+		<level name="Maven: org.hibernate:hibernate-entitymanager:4.2.7.SP1" value="project"/>
+		<level name="Maven: javax.validation:validation-api:1.0.0.GA" value="project"/>
+		<level name="Maven: org.hibernate:hibernate-validator:4.0.2.GA" value="project"/>
+		<level name="Maven: javax.xml.bind:jaxb-api:2.1" value="project"/>
+		<level name="Maven: javax.xml.stream:stax-api:1.0-2" value="project"/>
+		<level name="Maven: com.sun.xml.bind:jaxb-impl:2.1.3" value="project"/>
+	</levels>
+</component>

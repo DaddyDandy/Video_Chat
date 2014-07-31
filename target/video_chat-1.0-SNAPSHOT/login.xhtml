@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+<h:head>
+    <title>Join us, dude)</title>
+</h:head>
+<h:body>
+<h:form id="loginForm">
+    <p:focus for="login"/>
+    <p:growl id="growl" showDetail="true"/>
+
+    <p:layout fullPage="true">
+        <p:layoutUnit position="center" style="border: hidden">
+            <p:panel id="logPan"
+                     header="Join us, dude!"
+                     widgetVar="loginPanel"
+                     resizable="false"
+                     draggable="false"
+                     style="position:absolute; top: 10%; left: 30%; right: 30%; height: 75%; width: 38%; border: solid sienna 5px">
+
+                <h:panelGrid columns="2" cellpadding="5" style="width: 100%;">
+                    <h:outputLabel for="login" value="Login : "/>
+                    <p:inputText value="#{loginBean.login}"
+                                 id="login" label="login"/>
+
+                    <h:outputLabel for="password" value="Password : "/>
+                    <h:inputSecret value="#{loginBean.password}"
+                                   id="password" label="password"/>
+
+                    <p:commandButton id="loginButton"
+                                     value="Yeah, I want to join"
+                                     action="#{loginBean.login}"
+                                     ajax="false"/>
+                    <p:commandButton id="regBtn"
+                                     value="Registration"
+                                     action="#{userBean.newUser}"
+                                     ajax="false"/>
+                </h:panelGrid>
+
+            </p:panel>
+        </p:layoutUnit>
+    </p:layout>
+
+</h:form>
+</h:body>
+
+</html>

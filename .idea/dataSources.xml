@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourceManagerImpl" format="xml" hash="3293650510">
+    <data-source source="LOCAL" name="users" uuid="7cb8a96a-34cb-4a49-b59c-4042a93cfdd2">
+      <driver-ref>mysql</driver-ref>
+      <jdbc-driver>com.mysql.jdbc.Driver</jdbc-driver>
+      <jdbc-url>jdbc:mysql://localhost:3306/video_chat</jdbc-url>
+      <user-name>test</user-name>
+      <user-password>dfdadfcbdfd9dfd9dfdddfc5dfd8dfce</user-password>
+      <schema-pattern>video_chat.*</schema-pattern>
+      <libraries>
+        <library>
+          <url>file://C:\Users\Денис\.m2\repository\mysql\mysql-connector-java\5.1.27\mysql-connector-java-5.1.27.jar</url>
+        </library>
+      </libraries>
+    </data-source>
+  </component>
+</project>
+

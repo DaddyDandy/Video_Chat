@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+<h:head>
+    <title>Let's registr, dude :)</title>
+</h:head>
+<h:body>
+    <h:form id="regForm">
+        <p:focus for="login"/>
+        <p:growl id="growl" showDetail="true"/>
+
+        <p:layout fullPage="true">
+            <p:layoutUnit position="center" style="border: hidden">
+                <p:panel id="logPan"
+                         header="Join us, dude!"
+                         widgetVar="loginPanel"
+                         resizable="false"
+                         draggable="false"
+                         style="position:absolute; top: 10%; left: 30%; right: 30%; height: 75%; width: 38%; border: solid sienna 5px">
+
+                    <p:messages id="messages" autoUpdate="true"/>
+
+                    <h:panelGrid columns="2" cellpadding="5" id="inf" width="100%">
+
+                        <h:outputLabel for="login" value="Name : "/>
+                        <p:inputText value="#{userBean.currentUser.login}" autocomplete="false"
+                                     id="login" required="true" label="login">
+                            <f:validateLength minimum="3" maximum="16"/>
+                            <p:clientValidator />
+                        </p:inputText>
+
+
+                        <h:outputLabel for="pwd1" value="Password 1: *"/>
+                        <p:password id="pwd1" value="#{userBean.currentUser.password}" match="pwd2" label="Password 1"
+                                    required="true">
+                            <f:validateLength minimum="5"/>
+                            <p:clientValidator/>
+                        </p:password>
+
+
+                        <h:outputLabel for="pwd2" value="Password 2: *"/>
+                        <p:password id="pwd2" value="#{userBean.currentUser.password}" label="Password 2"
+                                    required="true" />
+                        <br/>
+                    </h:panelGrid>
+
+
+
+                    <h:panelGrid columns="2" cellpadding="10" width="100%">
+
+                        <p:commandButton id="regBtn"
+                                         value="Registration"
+                                         action="#{userBean.saveUser}"
+                                         style="margin-top: 15px;"
+                                         ajax="false" />
+
+
+                        <p:commandButton id="backBtn"
+                                         value="Back"
+                                         action="#{userBean.backToLog}"
+                                         style="margin-top: 15px;"
+                                         ajax="false"/>
+                    </h:panelGrid>
+                </p:panel>
+            </p:layoutUnit>
+        </p:layout>
+    </h:form>
+</h:body>
+
+</html>

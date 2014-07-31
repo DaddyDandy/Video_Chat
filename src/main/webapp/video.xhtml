@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+
+<h:head>
+    <title>Video Chat</title>
+    <style type="text/css">
+        #canvas, #live, #targetVideo {
+            -moz-transform: scaleX(-1);
+            -o-transform: scaleX(-1);
+            -webkit-transform: scaleX(-1);
+            transform: scaleX(-1);
+        }
+    </style>
+</h:head>
+
+<h:body>
+
+    <p:layout fullPage="true">
+        <!--text-->
+        <p:layoutUnit id="east_side"
+                      position="east"
+                      size="40%"
+                      resizable="false"
+                      style="border: hidden">
+
+            <p:layout>
+                <!--messages-->
+                <p:layoutUnit id="messageList"
+                        position="center" resizable="false" style="border: none; overflow: scroll;" header="Chat">
+                    <h:form id="messageListContent">
+                        <p:remoteCommand name="connectSockVideo" autoRun="true" action="#{videoBean.connectSocket}"/>
+                        <p:remoteCommand name="disconnectSocket" action="#{videoBean.disconnect}"/>
+                    </h:form>
+                </p:layoutUnit>
+
+                <!--text input-->
+                <p:layoutUnit position="south" size="15%" resizable="false" style="border: none">
+
+                    <h:form>
+                        <p:focus for="inputText"/>
+                        <p:growl id="writeMsg"/>
+
+                        <h:panelGrid columns="3" id="grid" style="width: 100%">
+                            <h:outputLabel value="Message : " for="inputText">
+                                <p:inputText id="inputText"
+                                             value="#{videoBean.privateMsg}"
+                                             required="true"
+                                             style="width: 70%; height: 90%"
+                                             autoResize="false">
+                                    <p:focus for="inputText"/>
+                                </p:inputText>
+                            </h:outputLabel>
+
+                            <!--Button to submit written text-->
+                            <p:commandButton id="btn_add"
+                                             value="Add"
+                                             style="width: 95%; height: 100%"
+                                             ajax="true"
+                                             update="writeMsg @parent"
+                                             actionListener="#{videoBean.sendPrivate}" />
+                        </h:panelGrid>
+                    </h:form>
+
+                </p:layoutUnit>
+            </p:layout>
+        </p:layoutUnit>
+
+        <!--video-->
+        <p:layoutUnit position="center" resizable="false" style="border: hidden">
+            <p:layout>
+
+                <p:layoutUnit id="top"
+                              position="center"
+                              resizable="false"
+                              style="border: none">
+
+                    <h:form id="form">
+                        <div id="live_video">
+                            <video id="live" autoplay="autoplay" width="0" height="0"></video>
+                            <canvas id="canvas"
+                                    width="250px"
+                                    height="190px"
+                                    style="display: inline; z-index: 9999; position: absolute; "/>
+
+                            <img id="targetVideo"
+                                 width="650"
+                                 height="480"
+                                 style="display: inline; position: absolute; left: 10%; top: 10%;"/>
+                            <audio id="tergetAudio"/>
+                        </div>
+
+                        <h:commandButton
+                                value="Disconnect"
+                                id="disconnect_btn"
+                                ajax="false"
+                                style="z-index: 9002; position: absolute; left: 45%; bottom: 5%;"
+                                action="#{videoBean.disconnect}"/>
+
+
+                    </h:form>
+                </p:layoutUnit>
+
+            </p:layout>
+        </p:layoutUnit>
+    </p:layout>
+
+    <!--message socket-->
+    <p:socket onMessage="handleMessage" channel="/private" widgetVar="private_socket" autoConnect="false"/>
+
+
+
+
+    <!--messages-->
+    <script type="text/javascript" src="js/message_script.js"></script>
+
+    <!-- video client part -->
+    <script type="text/javascript">
+        var username = "#{videoBean.username}";
+        var privateUser = "#{videoBean.privateUser}";
+        if(privateUser === null || privateUser === "") {
+            privateUser = username;
+        }
+        var wsV = new WebSocket("ws://localhost:8080/livevideo/" + privateUser);
+        wsV.onopen = function () {
+            console.log("Openened connection to video websocket");
+        }
+
+        wsV.onmessage = function(msg) {
+            var targetVideo = document.getElementById('targetVideo');
+            url = createObjectURL(msg.data);
+            targetVideo.onload = function() {
+                revokeObjectURL(url);
+            };
+            targetVideo.src = url;
+        }
+
+        wsV.onerror = function() {
+            console.log("Error with websocket");
+        }
+
+        wsV.onclose = function() {
+            console.log("Closed connection to video websocket");
+            disconnectSocket();
+        }
+    
+        // server part
+            
+        var video = $('#live').get()[0];
+        var canvas = $('#canvas');
+        var ctx = canvas.get()[0].getContext('2d');
+        
+        window.URL = window.URL || window.webkitURL;
+        navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
+        navigator.getUserMedia({video: true}, function(stream) {
+            video.src = window.URL.createObjectURL(stream);
+        }, function(err) {
+            alert('Error capturing video.');
+        });
+
+        // 2 functions for using ws.send only in ready state
+        // 1)
+        wsSend = function (message) {
+            this.waitForConnection(function () {
+                wsV.send(message);
+            }, 1000);
+        };
+        // 2)
+        this.waitForConnection = function (callback, interval) {
+            if (wsV.readyState === 1) {
+                callback();
+            } else {
+                var that = this;
+                setTimeout(function () {
+                    that.waitForConnection(callback);
+                }, interval);
+            }
+        };
+
+        timer = setInterval(function sendingPicture() {
+            ctx.drawImage(video, 0, 0, 250, 190);
+            var data = canvas.get()[0].toDataURL('image/jpeg', 1.0);
+            newblob = dataURItoBlob(data);
+            wsSend(newblob);
+        }, 100);
+
+        function dataURItoBlob(dataURI) {
+            var byteString = atob(dataURI.split(',')[1]);
+
+            // write the bytes of the string to an ArrayBuffer
+            var ab = new ArrayBuffer(byteString.length);
+            var ia = new Uint8Array(ab);
+            for (var i = 0; i &lt; byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+            }
+
+            var bb = new Blob([ab]);
+
+            return bb;
+        }
+
+        function createObjectURL ( file ) {
+            if ( window.webkitURL ) {
+                return window.webkitURL.createObjectURL( file );
+            } else if (window.URL.createObjectURL ) {
+                return window.URL.createObjectURL( file );
+            } else {
+                return null;
+            }
+        }
+
+        function revokeObjectURL ( file ) {
+            if ( window.webkitURL ) {
+                return window.webkitURL.revokeObjectURL( file );
+            } else if (window.URL.revokeObjectURL ) {
+                return window.URL.revokeObjectURL( file );
+            } else {
+                return null;
+            }
+        }    
+    </script>
+
+    <!-- audio (client part)-->
+    <script type="text/javascript">
+        var encoderWorker = new Worker('js/mp3Worker.js');
+        var wsA = new WebSocket("ws://localhost:8080/liveaudio");
+
+        //$(function() {
+        window.URL = window.URL || window.webkitURL;
+        window.AudioContext = window.AudioContext || window.webkitAudioContext;
+        navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
+
+        var audio_context = new AudioContext();
+        var recorder;
+
+        navigator.getUserMedia({audio: true}, function (stream) {
+            var microphone = audio_context.createMediaStreamSource(stream);
+            microphone.connect(audio_context.destination);
+
+            recorder = new Recorder(microphone);
+        }, function (err) {
+            alert('Error capturing audio.');
+        });
+        //});
+
+        timer = setInterval(function sendingAudio() {
+            setTimeout(function(){                
+                recorder &amp;&amp; recorder.record();
+            }, 1000);            
+            recorder &amp;&amp; recorder.stop();
+            console.log("sending audio ..........");
+        }, 100);
+
+        wsA.onopen = function(){
+            console.log("open websocket for audio");
+        }
+        wsA.onclose = function(){
+            console.log("close websocket audio connection");
+        }
+        wsA.onerror = function(){
+            console.log("Error with audio websocket");
+        }
+        wsA.onmessage = function(msg){            
+            var data = parseWav(msg.data);
+
+            // converting to mp3 from WAV
+            console.log(data);
+            console.log("Converting to Mp3");
+
+            encoderWorker.postMessage({ cmd: 'init', config:{
+                mode : 3,
+                channels:1,
+                samplerate: data.sampleRate,
+                bitrate: data.bitsPerSample
+            }});
+
+            encoderWorker.postMessage({ cmd: 'encode', buf: Uint8ArrayToFloat32Array(data.samples) });
+            encoderWorker.postMessage({ cmd: 'finish'});
+            encoderWorker.onmessage = function(e) {
+                if (e.data.cmd == 'data') {
+                    console.log("Done converting to Mp3");
+
+                    var audio = $('#targetAudio').get()[0];
+                    audio.src = 'data:audio/mp3;base64,' + encode64(e.data.buf);
+                    audio.play();
+                }
+            };
+        }
+    </script>
+    <!--audio-->
+    <script type="text/javascript" src="js/audio_script.js"></script>
+
+</h:body>
+
+</html>
