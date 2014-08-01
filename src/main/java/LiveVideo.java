@@ -1,5 +1,3 @@
-import org.atmosphere.websocket.WebSocket;
-import javax.faces.context.FacesContext;
 import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
@@ -14,8 +12,8 @@ public class LiveVideo {
 
     @OnOpen
     public void onOpen(Session session) throws IOException, EncodeException {
-        session.setMaxBinaryMessageBufferSize(1024 * 512);
         System.out.println("Open video");
+        session.setMaxBinaryMessageBufferSize(1024 * 512);        
     }
 
     @OnMessage

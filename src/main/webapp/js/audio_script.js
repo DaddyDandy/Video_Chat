@@ -1,41 +1,39 @@
 /**
 * Created by Денис on 30.07.2014.
 */
+	
+	
 (function(window){
-
 	var WORKER_PATH = 'js/audioWorker.js';
+	var encoderWorker = new Worker('js/mp3Worker.js');
 	var wsA = new WebSocket("ws://localhost:8080/liveaudio");
 
 	var Recorder = function(source, cfg){
 		var config = cfg || {};
 		var bufferLen = config.bufferLen || 4096;
 		this.context = source.context;
-		this.scriptProc = (this.context.createScriptProcessor || this.context.createJavaScriptNode).call(this.context, bufferLen, 2, 2);
+		this.node = (this.context.createScriptProcessor ||
+		             this.context.createJavaScriptNode).call(this.context, bufferLen, 2, 2);
 		var worker = new Worker(config.workerPath || WORKER_PATH);
 		worker.postMessage({
 			command: 'init',
 			config: {
-				sampleRate: this.context.sampleRate
+			sampleRate: this.context.sampleRate
 			}
 		});
 		var recording = false,
-		currCallback;
+		  currCallback;
 
-		this.scriptProc.onaudioprocess = function(e){
-			if (!recording) return;
-			worker.postMessage({
-				command: 'record',
-				buffer: [
-					e.inputBuffer.getChannelData(0)
-      				//e.inputBuffer.getChannelData(1)
-      			]
-  			});
+		this.node.onaudioprocess = function(e){
+			if (!recording){
+				return;							
+			wsA.send("some text____");															
 		}
 
 		this.configure = function(cfg){
 			for (var prop in cfg){
 				if (cfg.hasOwnProperty(prop)){
-					config[prop] = cfg[prop];
+				  config[prop] = cfg[prop];
 				}
 			}
 		}
@@ -69,29 +67,49 @@
 
 		//Mp3 conversion
 		worker.onmessage = function(e){
-			var blob = e.data;		    
-		  	var arrayBuffer;
-		  	var fileReader = new FileReader();
+			var blob = e.data;		
+			var arrayBuffer;
+			var fileReader = new FileReader();
 
-		  	fileReader.onload = function(){
-			  	arrayBuffer = this.result;
-			  	var buffer = new Uint8Array(arrayBuffer);
+			fileReader.onload = function(){
+				arrayBuffer = this.result;
+				var buffer = new Uint8Array(arrayBuffer),
+				data = parseWav(buffer);
 
-			  	// send buffer to another user via websocket
-                wsA.send(buffer);
-				alert('send audio');     
+				console.log(data);
+				console.log("Converting to Mp3");
+				log.innerHTML += "\n" + "Converting to Mp3";
+
+				encoderWorker.postMessage({ cmd: 'init', config:{
+				    mode : 3,
+					channels:1,
+					samplerate: data.sampleRate,
+					bitrate: data.bitsPerSample
+				}});
+
+				encoderWorker.postMessage({ cmd: 'encode', buf: Uint8ArrayToFloat32Array(data.samples) });
+				encoderWorker.postMessage({ cmd: 'finish'});
+				encoderWorker.onmessage = function(e) {
+				    if (e.data.cmd == 'data') {
+						console.log("Done converting to Mp3");
+						log.innerHTML += "\n" + "Done converting to Mp3";
+
+						/*var audio = new Audio();
+						audio.src = 'data:audio/mp3;base64,'+encode64(e.data.buf);
+						audio.play();*/			        
+				    }
+				};
 			};
 
 			fileReader.readAsArrayBuffer(blob);
-
 			currCallback(blob);
 		}
 
 
 		function encode64(buffer) {
 			var binary = '',
-			bytes = new Uint8Array( buffer ),
-			len = bytes.byteLength;
+				bytes = new Uint8Array( buffer ),
+				len = bytes.byteLength;
 
 			for (var i = 0; i < len; i++) {
 				binary += String.fromCharCode( bytes[ i ] );
@@ -102,7 +120,7 @@
 		function parseWav(wav) {
 			function readInt(i, bytes) {
 				var ret = 0,
-				shft = 0;
+					shft = 0;
 
 				while (bytes) {
 					ret += wav[i] << shft;
@@ -131,9 +149,9 @@
 			return f32Buffer;
 		}
 
-		source.connect(this.scriptProc);
-	    this.scriptProc.connect(this.context.destination);    //this should not be necessary
-	};   
+		source.connect(this.node);
+		this.node.connect(this.context.destination);    //this should not be necessary
+	};
 
 	window.Recorder = Recorder;
 

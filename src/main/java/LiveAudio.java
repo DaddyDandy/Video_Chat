@@ -18,13 +18,17 @@ public class LiveAudio {
 
     @OnMessage
     public void onMessage(byte[] audioData, Session session) {
+        try {            
+            System.out.println("send audio in Bean");            
+        } catch (Throwable ioe) {
+            System.out.println("Error sending audio " + ioe.getMessage());
+        }        
+    }
+
+    @OnMessage
+    public void onMessage(String str, Session session) {
         try {
-            // Wrap a byte array into a buffer
-            ByteBuffer buf = ByteBuffer.wrap(audioData);
-            for (Map.Entry<Session, String> entry : sessionsWithUser.entrySet()) {
-                entry.getKey().getBasicRemote().sendBinary(buf);
-            }
-            System.out.println("send audio .....................................................");
+            System.out.println("send audio in Bean");
         } catch (Throwable ioe) {
             System.out.println("Error sending audio " + ioe.getMessage());
         }

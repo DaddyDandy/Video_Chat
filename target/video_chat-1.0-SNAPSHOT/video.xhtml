@@ -92,8 +92,7 @@
                             <img id="targetVideo"
                                  width="650"
                                  height="480"
-                                 style="display: inline; position: absolute; left: 10%; top: 10%;"/>
-                            <audio id="tergetAudio"/>
+                                 style="display: inline; position: absolute; left: 10%; top: 10%;"/>                            
                         </div>
 
                         <h:commandButton
@@ -120,118 +119,10 @@
     <!--messages-->
     <script type="text/javascript" src="js/message_script.js"></script>
 
-    <!-- video client part -->
-    <script type="text/javascript">
-        var username = "#{videoBean.username}";
-        var privateUser = "#{videoBean.privateUser}";
-        if(privateUser === null || privateUser === "") {
-            privateUser = username;
-        }
-        var wsV = new WebSocket("ws://localhost:8080/livevideo/" + privateUser);
-        wsV.onopen = function () {
-            console.log("Openened connection to video websocket");
-        }
-
-        wsV.onmessage = function(msg) {
-            var targetVideo = document.getElementById('targetVideo');
-            url = createObjectURL(msg.data);
-            targetVideo.onload = function() {
-                revokeObjectURL(url);
-            };
-            targetVideo.src = url;
-        }
-
-        wsV.onerror = function() {
-            console.log("Error with websocket");
-        }
-
-        wsV.onclose = function() {
-            console.log("Closed connection to video websocket");
-            disconnectSocket();
-        }
-    
-        // server part
-            
-        var video = $('#live').get()[0];
-        var canvas = $('#canvas');
-        var ctx = canvas.get()[0].getContext('2d');
-        
-        window.URL = window.URL || window.webkitURL;
-        navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
-        navigator.getUserMedia({video: true}, function(stream) {
-            video.src = window.URL.createObjectURL(stream);
-        }, function(err) {
-            alert('Error capturing video.');
-        });
-
-        // 2 functions for using ws.send only in ready state
-        // 1)
-        wsSend = function (message) {
-            this.waitForConnection(function () {
-                wsV.send(message);
-            }, 1000);
-        };
-        // 2)
-        this.waitForConnection = function (callback, interval) {
-            if (wsV.readyState === 1) {
-                callback();
-            } else {
-                var that = this;
-                setTimeout(function () {
-                    that.waitForConnection(callback);
-                }, interval);
-            }
-        };
-
-        timer = setInterval(function sendingPicture() {
-            ctx.drawImage(video, 0, 0, 250, 190);
-            var data = canvas.get()[0].toDataURL('image/jpeg', 1.0);
-            newblob = dataURItoBlob(data);
-            wsSend(newblob);
-        }, 100);
-
-        function dataURItoBlob(dataURI) {
-            var byteString = atob(dataURI.split(',')[1]);
-
-            // write the bytes of the string to an ArrayBuffer
-            var ab = new ArrayBuffer(byteString.length);
-            var ia = new Uint8Array(ab);
-            for (var i = 0; i &lt; byteString.length; i++) {
-                ia[i] = byteString.charCodeAt(i);
-            }
-
-            var bb = new Blob([ab]);
-
-            return bb;
-        }
-
-        function createObjectURL ( file ) {
-            if ( window.webkitURL ) {
-                return window.webkitURL.createObjectURL( file );
-            } else if (window.URL.createObjectURL ) {
-                return window.URL.createObjectURL( file );
-            } else {
-                return null;
-            }
-        }
-
-        function revokeObjectURL ( file ) {
-            if ( window.webkitURL ) {
-                return window.webkitURL.revokeObjectURL( file );
-            } else if (window.URL.revokeObjectURL ) {
-                return window.URL.revokeObjectURL( file );
-            } else {
-                return null;
-            }
-        }    
-    </script>
-
     <!-- audio (client part)-->
-    <script type="text/javascript">
-        var encoderWorker = new Worker('js/mp3Worker.js');
+    <script type="text/javascript">        
         var wsA = new WebSocket("ws://localhost:8080/liveaudio");
-
-        //$(function() {
+        
         window.URL = window.URL || window.webkitURL;
         window.AudioContext = window.AudioContext || window.webkitAudioContext;
         navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
@@ -240,61 +131,29 @@
         var recorder;
 
         navigator.getUserMedia({audio: true}, function (stream) {
-            var microphone = audio_context.createMediaStreamSource(stream);
-            microphone.connect(audio_context.destination);
+            var input = audio_context.createMediaStreamSource(stream);
+            input.connect(audio_context.destination);
 
-            recorder = new Recorder(microphone);
+            recorder = new Recorder(input);
+            recorder &amp;&amp; recorder.record();
         }, function (err) {
             alert('Error capturing audio.');
         });
-        //});
-
-        timer = setInterval(function sendingAudio() {
-            setTimeout(function(){                
-                recorder &amp;&amp; recorder.record();
-            }, 1000);            
-            recorder &amp;&amp; recorder.stop();
-            console.log("sending audio ..........");
-        }, 100);
-
-        wsA.onopen = function(){
-            console.log("open websocket for audio");
+                                        
+        wsA.onopen = function(){            
+            console.log("Openened connection to audio websocket.");
         }
         wsA.onclose = function(){
-            console.log("close websocket audio connection");
+            console.log("Close websocket audio connection.");
         }
         wsA.onerror = function(){
-            console.log("Error with audio websocket");
+            console.log("Error with audio websocket.");
         }
-        wsA.onmessage = function(msg){
-            // parse binary data to WAV
-            var data = parseWav(msg.data);
-
-            // converting to mp3 from WAV
-            console.log(data);
-            console.log("Converting to Mp3");
-
-            encoderWorker.postMessage({ cmd: 'init', config:{
-                mode : 3,
-                channels:1,
-                samplerate: data.sampleRate,
-                bitrate: data.bitsPerSample
-            }});
-
-            encoderWorker.postMessage({ cmd: 'encode', buf: Uint8ArrayToFloat32Array(data.samples) });
-            encoderWorker.postMessage({ cmd: 'finish'});
-            encoderWorker.onmessage = function(e) {
-                if (e.data.cmd == 'data') {
-                    console.log("Done converting to Mp3");
-
-                    var audio = $('#targetAudio').get()[0];
-                    audio.src = 'data:audio/mp3;base64,' + encode64(e.data.buf);
-                    audio.play();
-                }
-            };
+        wsA.onmessage = function(msg){            
+            console.log("Recived message : ___");
         }
     </script>
-    <!--audio-->
+    <!--audio (server part)-->
     <script type="text/javascript" src="js/audio_script.js"></script>
 
 </h:body>
